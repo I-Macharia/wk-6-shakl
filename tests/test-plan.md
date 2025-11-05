@@ -4,7 +4,7 @@
 **Version:** 1.0  
 **Date:** November 5, 2025  
 **Prepared by:** Software Testing Team  
-**Reviewed by:** Project Manager  
+**Reviewed by:**   
 
 ---
 
@@ -34,8 +34,6 @@ The objective of this test plan is to ensure the CleanCity application functions
 - **Functional Testing:** Verify core app functions (registration, login, scheduling).
 - **UI/UX Testing:** Check layout, responsiveness, and user navigation.
 - **Cross-Browser Testing:** Chrome, Firefox, Edge, Safari.
-- **Accessibility Testing:** Using screen readers and ARIA label checks.
-- **Security Testing:** Basic input validation, XSS and SQL injection prevention.
 - **Performance Testing:** Load handling with multiple users.
 
 ### Tools:
