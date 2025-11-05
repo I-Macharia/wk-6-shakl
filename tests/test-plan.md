@@ -1,10 +1,10 @@
 # CleanCity QA Test Plan
 
 **Project:** CleanCity - Waste Pickup Scheduler  
-**Version:**  
+**Version:**  1.0
 **Date:** November 5, 2025  
 **Prepared by:** Software Testing Team  
-**Reviewed by:**   
+**Reviewed by:**   Ian Macharia
 
 ---
 
@@ -52,7 +52,6 @@ The objective of this test plan is to ensure the CleanCity application functions
 ## 5. Roles and Responsibilities
 | Role | Name | Responsibilities |
 |------|------|------------------|
-
 | **Test Manager**  | Shanice Chepkwony     | Oversees the entire testing process, plans schedules, assigns tasks, and ensures deliverables meet deadlines. |
 | **Risk Analyst**  | Ian Macharia | Identifies potential risks, assesses impact and likelihood, and develops mitigation strategies |
 | **Test Executor** | Mark Mwangi Gaituri | Executes test cases, documents results, and reports defects in issue tracking tools.                          |
