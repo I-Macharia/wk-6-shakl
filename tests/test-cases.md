@@ -7,7 +7,7 @@ It serves as a reference for what was tested, expected outcomes, and verificatio
 
 ## Test Cases Table
 
-# ✅ CleanCity Test Execution Log (Consolidated)
+
 
 | Test Case ID | Date       | Feature                     | Test Description | Steps to Execute | Test Data | Expected Result | Actual Result | Status | Tested By |
 |--------------|------------|-----------------------------|------------------|------------------|-----------|-----------------|---------------|--------|-----------|
