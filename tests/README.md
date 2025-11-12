@@ -48,7 +48,7 @@ Example output file:
 
 Notes:
 - The Selenium test is built to be self-contained; it collects timestamped messages into an in-memory list and writes a single CSV at the end.
-- If you see a WebDriverException mentioning BiDi / "Unable to find url to connect to from capabilities", use the non-BiDi approach (remove calls to driver.script) or ensure Chrome + ChromeDriver versions support BiDi (ChromeDriver v115+ and matching Chrome).
+
 
 ## Run Cypress tests
 From the Cypress project folder:
@@ -76,7 +76,7 @@ Keep these documents updated as tests or scope change.
 - Chrome/ChromeDriver mismatch often causes failures — ensure versions align.
 - If the Selenium test blocks (e.g., waiting for input), remove any manual input() calls to run in CI.
 - For CI: run the Selenium script headless by setting Chrome options (add arguments like `--headless=new`, `--no-sandbox`, `--disable-dev-shm-usage`) or use a containerized Chrome.
-- To capture richer browser console messages without BiDi: inject a small JS console wrapper into pages or use Chrome DevTools Protocol via execute_cdp_cmd.
+
 
 ## Extending tests
 - Selenium: break the monolithic script into functions and convert to pytest for better reporting, fixtures, and CI integration.
