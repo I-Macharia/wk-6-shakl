@@ -134,7 +134,7 @@ jobs:
             
             # Jira description in Atlassian Document Format
             description=$(cat <<EOF
-{
+  {
   "type": "doc",
   "version": 1,
   "content": [
@@ -269,7 +269,11 @@ EOF
                   description: $desc,
                   issuetype: {name: $itype},
                   priority: {name: $prior},
-                  labels: ["sonarcloud", "automated", "'"${type,,}"'"]
+                  labels: [
+                  "sonarcloud",
+                  "automated",
+                  "${type,,}"
+                  ]
                 }
               }')
 
