@@ -52,7 +52,7 @@ jobs:
     name: Create Jira Issues
     needs: analyze
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -80,10 +80,9 @@ jobs:
           echo "Jira Project: ${JIRA_PROJECT_KEY}"
           echo ""
 
-          # Fetch issues from SonarCloud
           SONAR_API="https://sonarcloud.io/api/issues/search"
           PARAMS="componentKeys=${SONAR_PROJECT_KEY}&resolved=false&types=VULNERABILITY,BUG,CODE_SMELL&ps=500"
-          
+
           echo "📊 Fetching issues from SonarCloud..."
           issues_json=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_API}?${PARAMS}")
 
@@ -103,7 +102,6 @@ jobs:
             exit 0
           fi
 
-          # Process each issue
           created=0
           skipped=0
           failed=0
@@ -117,83 +115,79 @@ jobs:
             file=$(echo "$issue" | jq -r '.component' | sed 's/.*://')
             line=$(echo "$issue" | jq -r '.line // "n/a"')
             message=$(echo "$issue" | jq -r '.message')
-            
-            # Create SonarCloud issue link
             sonar_link="https://sonarcloud.io/project/issues?id=${SONAR_PROJECT_KEY}&open=${issue_key}"
-
-            # Create Jira summary and description
             summary="[SonarCloud ${type}] ${severity}: ${rule} in ${file}"
-            
-            # Jira description in Atlassian Document Format
-            description=$(cat <<EOF
+
+            # Jira description in JSON (variables expanded)
+              description=$(cat <<- 'EOF'
             {
               "type": "doc",
               "version": 1,
               "content": [
-            {
-                "type": "heading",
-                "attrs": {"level": 3},
-                "content": [{"type": "text", "text": "SonarCloud Issue Details"}]
+                {
+                  "type": "heading",
+                  "attrs": {"level": 3},
+                  "content": [{"type": "text", "text": "SonarCloud Issue Details"}]
                 },
-           {
-                "type": "paragraph",
-                 "content": [
-                {"type": "text", "text": "Issue Key: ", "marks": [{"type": "strong"}]},
-                {"type": "text", "text": "${issue_key}"}
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "Issue Key: ", "marks": [{"type": "strong"}]},
+                    {"type": "text", "text": "${issue_key}"}
                   ]
-                  },
-          {
-                "type": "paragraph",
-                 "content": [
-                {"type": "text", "text": "Rule: ", "marks": [{"type": "strong"}]},
-                {"type": "text", "text": "${rule}"}
+                },
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "Rule: ", "marks": [{"type": "strong"}]},
+                    {"type": "text", "text": "${rule}"}
                   ]
-                  },
-          {
-                "type": "paragraph",
-                "content": [
-                {"type": "text", "text": "Severity: ", "marks": [{"type": "strong"}]},
-                {"type": "text", "text": "${severity}"}
-                ]
                 },
-          {
-              "type": "paragraph",
-              "content": [
-              {"type": "text", "text": "Type: ", "marks": [{"type": "strong"}]},
-              {"type": "text", "text": "${type}"}
-                ]
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "Severity: ", "marks": [{"type": "strong"}]},
+                    {"type": "text", "text": "${severity}"}
+                  ]
                 },
-          {
-              "type": "paragraph",
-              "content": [
-              {"type": "text", "text": "File: ", "marks": [{"type": "strong"}]},
-              {"type": "text", "text": "${file}:${line}"}
-                ]
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "Type: ", "marks": [{"type": "strong"}]},
+                    {"type": "text", "text": "${type}"}
+                  ]
                 },
-          {
-            "type": "heading",
-            "attrs": {"level": 3},
-            "content": [{"type": "text", "text": "Issue Description"}]
-              },
-              {
-              "type": "paragraph",
-              "content": [{"type": "text", "text": "${message}"}]
-            },
-          {
-            "type": "paragraph",
-            "content": [
-            {"type": "text", "text": "View in SonarCloud: ", "marks": [{"type": "strong"}]},
-            {
-              "type": "text",
-              "text": "${sonar_link}",
-              "marks": [{"type": "link", "attrs": {"href": "${sonar_link}"}}]
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "File: ", "marks": [{"type": "strong"}]},
+                    {"type": "text", "text": "${file}:${line}"}
+                  ]
+                },
+                {
+                  "type": "heading",
+                  "attrs": {"level": 3},
+                  "content": [{"type": "text", "text": "Issue Description"}]
+                },
+                {
+                  "type": "paragraph",
+                  "content": [{"type": "text", "text": "${message}"}]
+                },
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "View in SonarCloud: ", "marks": [{"type": "strong"}]},
+                    {
+                      "type": "text",
+                      "text": "${sonar_link}",
+                      "marks": [{"type": "link", "attrs": {"href": "${sonar_link}"}}]
+                    }
+                  ]
+                }
+              ]
             }
-                ]
-                }
-                ]
-                }
-                EOF
-                    )
+          EOF
+          )
 
             # Check if Jira issue already exists
             search_jql=$(printf 'text ~ "%s" ORDER BY created DESC' "$issue_key" | jq -sRr @uri)
@@ -214,37 +208,18 @@ jobs:
 
             # Map SonarCloud severity to Jira priority
             case "$severity" in
-              BLOCKER|CRITICAL)
-                priority="Highest"
-                ;;
-              MAJOR)
-                priority="High"
-                ;;
-              MINOR)
-                priority="Medium"
-                ;;
-              INFO)
-                priority="Low"
-                ;;
-              *)
-                priority="Medium"
-                ;;
+              BLOCKER|CRITICAL) priority="Highest" ;;
+              MAJOR) priority="High" ;;
+              MINOR) priority="Medium" ;;
+              INFO) priority="Low" ;;
+              *) priority="Medium" ;;
             esac
 
             # Map SonarCloud type to Jira issue type
             case "$type" in
-              BUG)
-                issue_type="Bug"
-                ;;
-              VULNERABILITY)
-                issue_type="Bug"
-                ;;
-              CODE_SMELL)
-                issue_type="Task"
-                ;;
-              *)
-                issue_type="Bug"
-                ;;
+              BUG|VULNERABILITY) issue_type="Bug" ;;
+              CODE_SMELL) issue_type="Task" ;;
+              *) issue_type="Bug" ;;
             esac
 
             # Create Jira issue payload
@@ -262,9 +237,9 @@ jobs:
                   issuetype: {name: $itype},
                   priority: {name: $prior},
                   labels: [
-                  "sonarcloud",
-                  "automated",
-                  "${type,,}"
+                    "sonarcloud",
+                    "automated",
+                    ($itype|ascii_downcase)
                   ]
                 }
               }')
@@ -293,7 +268,6 @@ jobs:
               ((failed++)) || true
             fi
             
-            # Rate limiting: small delay between requests
             sleep 0.5
           done
 
