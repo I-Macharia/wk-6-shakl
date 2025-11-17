@@ -245,37 +245,38 @@ jobs:
               }')
 
             # Create Jira issue
-            echo "  📝 Creating Jira issue for ${issue_key} (${severity} ${type})"
-            
-            echo "DEBUG: Attempting to create issue..."
-            create_resp=$(curl -v -s -w "\n%{http_code}" \
-                -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
-                -X POST \
-                -H "Content-Type: application/json" \
-                --data "$payload" \
-                "https://${JIRA_HOST}/rest/api/3/issue" 2>&1 || echo "000") # 2>&1 captures error output
+          echo "  📝 Creating Jira issue for ${issue_key} (${severity} ${type})"
           
-            echo "DEBUG: Raw cURL Response:"
-            echo "$create_resp"
+          # REVERTING CURL TO CLEAN MODE:
+          # -s: Silent mode (suppresses progress/connection info)
+          # 2>/dev/null: Suppresses error messages (like the "Closing connection" line)
+          create_resp=$(curl -s -w "\n%{http_code}" \
+            -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data "$payload" \
+            "https://${JIRA_HOST}/rest/api/3/issue" 2>/dev/null || echo "000")
+          
+          # Body is everything BUT the last line (the HTTP code)
+          http_code=$(echo "$create_resp" | tail -n1)
+          body=$(echo "$create_resp" | sed '$d')
 
-            http_code=$(echo "$create_resp" | grep -E '^[0-9]{3}$' | tail -n1 || echo "000")
-            body=$(echo "$create_resp" | sed -E '/^[0-9]{3}$/d')
-            
-            http_code=$(echo "$create_resp" | tail -n1)
-            body=$(echo "$create_resp" | sed '$d')
-
-            if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
-              jira_key=$(echo "$body" | jq -r '.key // "unknown"')
-              jira_url="https://${JIRA_HOST}/browse/${jira_key}"
-              echo "  ✅ Created ${jira_key}: ${jira_url}"
-              ((created++)) || true
-            else
-              echo "  ❌ Failed to create Jira issue (HTTP ${http_code})"
-              echo "$body" | jq '.' 2>/dev/null || echo "$body"
-              ((failed++)) || true
-            fi
-            
-            sleep 0.5
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            # We must use grep to extract *only* the JSON line from the body
+            # to be absolutely sure we don't pass junk data to jq.
+            json_line=$(echo "$body" | grep -E '^{.*\}$')
+            jira_key=$(echo "$json_line" | jq -r '.key // "unknown"')
+            jira_url="https://${JIRA_HOST}/browse/${jira_key}"
+            echo "  ✅ Created ${jira_key}: ${jira_url}"
+            ((created++)) || true
+          else
+            echo "  ❌ Failed to create Jira issue (HTTP ${http_code})"
+            # Use grep here too to ensure only the potential error body is printed
+            echo "$body" | grep -E '^{.*\}$' | jq '.' 2>/dev/null || echo "$body"
+            ((failed++)) || true
+          fi
+          
+          sleep 0.5
           done
 
           echo ""
