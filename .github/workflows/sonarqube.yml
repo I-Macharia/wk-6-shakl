@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for better analysis
+          fetch-depth: 0
 
       - name: Run SonarCloud analysis
         uses: SonarSource/sonarcloud-github-action@v1
@@ -51,7 +51,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Fetch all unresolved issues (VULNERABILITY, BUG, CODE_SMELL)
           SONAR_API="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&resolved=false&types=VULNERABILITY,BUG,CODE_SMELL&ps=500"
           echo "Calling SonarCloud API for project ${SONAR_PROJECT_KEY}"
           issues_json=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_API}")
@@ -64,7 +63,6 @@ jobs:
             exit 0
           fi
 
-          # Iterate issues and create Jira issue if one doesn't already exist
           echo "$issues_json" | jq -c '.issues[]' | while IFS= read -r issue; do
             issue_key=$(echo "$issue" | jq -r '.key')
             rule=$(echo "$issue" | jq -r '.rule')
@@ -75,18 +73,12 @@ jobs:
             message=$(echo "$issue" | jq -r '.message' | sed 's/"/\\"/g')
             sonar_link="https://sonarcloud.io/project/issues?id=${SONAR_PROJECT_KEY}&open=${issue_key}"
 
-            # Build summary and description
             summary="SonarCloud ${severity}: ${rule} in ${file}:${line} (${issue_key})"
             description="SonarCloud issue: ${issue_key}\n\nRule: ${rule}\nSeverity: ${severity}\nComponent: ${comp}\nLine: ${line}\n\nMessage:\n${message}\n\nSonar link: ${sonar_link}"
 
-            # Check if Jira issue already exists for this Sonar key
-            jql=$(python3 - <<'PY'
-import urllib.parse, sys
-key = sys.argv[1]
-j = "summary ~ \"%s\"" % key
-print(urllib.parse.quote(j))
-PY
- "$issue_key")
+            # URL encode the issue key for JQL query using printf
+            jql=$(printf 'summary ~~ "%s"' "$issue_key" | python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read()))")
+
             search_url="https://${JIRA_HOST}/rest/api/3/search?jql=${jql}&fields=key"
             existing=$(curl -s -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" -H "Accept: application/json" "${search_url}")
 
@@ -96,7 +88,6 @@ PY
               continue
             fi
 
-            # Create Jira issue payload
             payload=$(jq -n --arg proj "${JIRA_PROJECT_KEY}" \
                             --arg summ "$summary" \
                             --arg desc "$description" \
