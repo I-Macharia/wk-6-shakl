@@ -247,7 +247,7 @@ jobs:
                   },
                   {
                     "type": "paragraph",
-                    "content": [{"type": "text", "text": ("2. Check line " + $msg)}]
+                    "content": [{"type": "text", "text": ("2. Check the issue: " + $msg)}]
                   }
                 ]
               }')
@@ -275,29 +275,9 @@ jobs:
                   }
                 ]
               }')
-            
-            environment_text=$(jq -n \
-              --arg file "$file" \
-              --arg line "$line" \
-              '{
-                "type": "doc",
-                "version": 1,
-                "content": [
-                  {
-                    "type": "paragraph",
-                    "content": [
-                      {"type": "text", "text": "File: ", "marks": [{"type": "strong"}]},
-                      {"type": "text", "text": ($file + ":" + $line)}
-                    ]
-                  },
-                  {
-                    "type": "paragraph",
-                    "content": [{"type": "text", "text": "Detected by: SonarCloud"}]
-                  }
-                ]
-              }')
 
             # Create Jira issue payload with required custom fields
+            # customfield_10042 (Severity) and customfield_10044 (Environment) need to be objects with 'name' or 'id'
             payload=$(jq -n \
               --arg proj "${JIRA_PROJECT_KEY}" \
               --arg summ "$summary" \
@@ -307,7 +287,8 @@ jobs:
               --arg sev "$severity" \
               --argjson steps "$steps_to_reproduce" \
               --argjson expected "$expected_vs_actual" \
-              --argjson env "$environment_text" \
+              --arg file "$file" \
+              --arg line "$line" \
               '{
                 fields: {
                   project: {key: $proj},
@@ -321,9 +302,9 @@ jobs:
                     ($itype|ascii_downcase)
                   ],
                   customfield_10041: $steps,
-                  customfield_10042: $sev,
+                  customfield_10042: {name: $sev},
                   customfield_10043: $expected,
-                  customfield_10044: $env,
+                  customfield_10044: {name: ($file + ":" + $line)},
                   customfield_10039: []
                 }
               }')
