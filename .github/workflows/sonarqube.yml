@@ -72,6 +72,12 @@ jobs:
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
         run: |
           set -euo pipefail
+          
+          # ==========================================
+          # USER CONFIGURATION
+          # ==========================================
+          JIRA_ENV_OPTION="Chrome"
+          # ==========================================
 
           echo "=========================================="
           echo "SonarCloud to Jira Issue Sync"
@@ -215,7 +221,9 @@ jobs:
               continue
             fi
 
-            # Map SonarCloud severity to Jira priority
+            # --- MAPPING LOGIC START ---
+
+            # 1. Priority (Standard Jira field)
             case "$severity" in
               BLOCKER|CRITICAL) priority="Highest" ;;
               MAJOR) priority="High" ;;
@@ -224,23 +232,22 @@ jobs:
               *) priority="Medium" ;;
             esac
 
-            # Map SonarCloud severity to Jira custom field format (Title Case)
+            # 2. Issue Type
+            issue_type="Bug"
+
+            # 3. Severity Custom Field (customfield_10042)
+            # Mapped to match your options: Critical, Major, Minor, Cosmetic
             case "$severity" in
-              BLOCKER) jira_severity="Blocker" ;;
+              BLOCKER) jira_severity="Critical" ;;
               CRITICAL) jira_severity="Critical" ;;
               MAJOR) jira_severity="Major" ;;
               MINOR) jira_severity="Minor" ;;
-              INFO) jira_severity="Minor" ;;
+              INFO) jira_severity="Cosmetic" ;;
               *) jira_severity="Major" ;;
             esac
+            
+            # --- MAPPING LOGIC END ---
 
-            # Map SonarCloud type to Jira issue type
-            case "$type" in
-              BUG|VULNERABILITY|CODE_SMELL) issue_type="Bug" ;;
-              *) issue_type="Bug" ;;
-            esac
-
-            # Prepare custom field values
             steps_to_reproduce=$(jq -n \
               --arg sl "$sonar_link" \
               --arg msg "$message" \
@@ -286,9 +293,8 @@ jobs:
                 ]
               }')
 
-            # Create Jira issue payload with required custom fields
-            # FIXED: Mapped severity to proper Title Case using $jira_severity
-            # FIXED: Removed customfield_10044 (Environment) as file paths are not valid options for a Select List
+            # Create Jira issue payload
+            # customfield_10044 (Environment) uses "Chrome" (a valid option)
             payload=$(jq -n \
               --arg proj "${JIRA_PROJECT_KEY}" \
               --arg summ "$summary" \
@@ -296,6 +302,7 @@ jobs:
               --arg prior "$priority" \
               --arg itype "$issue_type" \
               --arg sev "$jira_severity" \
+              --arg env "$JIRA_ENV_OPTION" \
               --argjson steps "$steps_to_reproduce" \
               --argjson expected "$expected_vs_actual" \
               '{
@@ -311,14 +318,14 @@ jobs:
                     ($itype|ascii_downcase)
                   ],
                   customfield_10041: $steps,
-                  customfield_10042: {name: $sev},
+                  customfield_10042: {value: $sev},
                   customfield_10043: $expected,
+                  customfield_10044: {value: $env},
                   customfield_10039: []
                 }
               }')
 
-            # Create Jira issue
-            echo "  📝 Creating Jira issue for ${issue_key} (${severity} ${type})"
+            echo "  📝 Creating Jira issue for ${issue_key} (Severity: ${jira_severity})"
             
             create_resp=$(curl -s -w "\n%{http_code}" \
               -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
@@ -327,7 +334,6 @@ jobs:
               --data "$payload" \
               "https://${JIRA_HOST}/rest/api/3/issue" 2>/dev/null || echo "000")
             
-            # Body is everything BUT the last line (the HTTP code)
             http_code=$(echo "$create_resp" | tail -n1)
             body=$(echo "$create_resp" | sed '$d')
 
