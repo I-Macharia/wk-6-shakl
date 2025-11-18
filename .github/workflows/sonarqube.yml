@@ -119,7 +119,7 @@ jobs:
             summary="[SonarCloud ${type}] ${severity}: ${rule} in ${file}"
 
             # Jira description in JSON (variables expanded)
-              description=$(cat <<- 'EOF'
+              description=$(cat << EOF
             {
               "type": "doc",
               "version": 1,
@@ -218,7 +218,7 @@ jobs:
             # Map SonarCloud type to Jira issue type
             case "$type" in
               BUG|VULNERABILITY) issue_type="Bug" ;;
-              CODE_SMELL) issue_type="Task" ;;
+              CODE_SMELL) issue_type="Bug" ;;
               *) issue_type="Bug" ;;
             esac
 
