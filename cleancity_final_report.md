@@ -3,12 +3,12 @@
 
 **Document ID:** TR-2025-CleanCity-001  
 **Date of Report:** November 19, 2025  
-**Testing Period:** November 5 - November 18, 2025
+**Testing Period:** November 5 - November 19, 2025
 
 **Prepared by:**  
 - **Test Manager:** Shanice Chepkwony  
-- **Risk Analyst:** Ian Macharia  
-- **Test Executor:** Mark Mwangi Gaituri
+- **Risk Analyst:** Mark Mwangi Gaituri
+- **Test Executor:** Ian Macharia  
 
 **Document Version:** 1.0  
 **Institution:** PLP Academy
@@ -788,8 +788,8 @@ The following stakeholders have reviewed this report:
 
 | Role | Name | Date | Status | Notes |
 |------|------|------|--------|-------|
-| **Test Manager** | Shanice Chepkwony | Nov 19, 2025 | [Approved] | Recommends blocking release pending critical fixes |
-| **Risk Analyst** | Ian Macharia | Nov 19, 2025 | [Approved] | Identified 5 critical security risks |
-| **Test Executor** | Mark Mwangi Gaituri | Nov 19, 2025 | [Approved] | Completed 14 test executions with automation |
+| **Test Manager** | Shanice Chepkwony | Nov 19, 2025 | [Pending] | Recommends blocking release pending critical fixes |
+| **Risk Analyst** | Mark Mwangi Gaituri  | Nov 19, 2025 | [Pending] | Identified 5 critical security risks |
+| **Test Executor** |  Ian Macharia | Nov 19, 2025 | [Approved] | Completed 14 test executions with automation |
 | **Development Lead** | [Pending] | [Pending] | [Pending] | Awaiting review of security findings |
-| **Product Owner** | [
+| **Product Owner** | 
